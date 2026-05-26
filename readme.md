@@ -1,0 +1,1 @@
+This repo will be acts as Shared Library of Jenkins for all applications commonly configuration.
