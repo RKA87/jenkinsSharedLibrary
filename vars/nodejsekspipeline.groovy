@@ -81,9 +81,7 @@ def call(Map configMap) {
 
                         withCredentials([string(credentialsId: 'github-dependabot-scan-token', variable: 'GITHUB_TOKEN')]) {
                             def repoUrl = sh(
-                                script: """
-                                    git remote get-url origin
-                                """,
+                                script: "git remote get-url origin",
                                 returnStdout: true
                             ).trim()
                             def repoPath = repoUrl.replaceAll(/.*github\.com[\/:]/, '').replaceAll(/\.git$/, '') 
@@ -94,7 +92,7 @@ def call(Map configMap) {
                                         -H "Accept: application/vnd.github+json" \
                                         -H "Authorization: Bearer ${GITHUB_TOKEN}" \
                                         -H "X-GitHub-Api-Version: 2022-11-28" \
-                                        https://api.github.com/repos/${repoPath}/dependabot/alerts?state=open&per_page=100"
+                                        "https://api.github.com/repos/${repoPath}/dependabot/alerts?state=open&per_page=100"
                                 """,
                                 returnStdout: true
                             ).trim()
