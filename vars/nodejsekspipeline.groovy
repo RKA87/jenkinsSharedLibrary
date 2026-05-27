@@ -28,7 +28,7 @@ def call(Map configMap) {
 
                         def data = readJSON file: 'package.json'
                         
-                        appVersion = data.appVersion
+                        appVersion = data.version
 
                         echo "ApplicationName: ${configMap.appName} Version: ${appVersion}"
 
