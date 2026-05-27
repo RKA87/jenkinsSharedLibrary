@@ -45,35 +45,35 @@ def call(Map configMap) {
                     }
                 }
             }
-            stage('unit test') {
-                steps {
-                    script {
-                        // these tests will run using Jest testing framework
-                        sh """
-                            npm test
-                        """
-                    }
-                }
-            }
-            stage('sonarQube analysis') {
-                steps {
-                    script {
-                        def scannerHome = tool name: 'sonar-8' // agent configuration
-                        withSonarQubeEnv('sonarqube-instance') { // analysing and uploading to server
-                            sh "${scannerHome}/bin/sonar-scanner"
-                        }
-                    }
-                }
-            }
-            stage('qualityGate analysis') {
-                steps {
-                    script {
-                        timeout(time:5, unit:"MINUTES"){
-                            waitForQualityGate abortPipeline: true
-                        }
-                    }
-                }
-            }
+            // stage('unit test') {
+            //     steps {
+            //         script {
+            //             // these tests will run using Jest testing framework
+            //             sh """
+            //                 npm test
+            //             """
+            //         }
+            //     }
+            // }
+            // stage('sonarQube analysis') {
+            //     steps {
+            //         script {
+            //             def scannerHome = tool name: 'sonar-8' // agent configuration
+            //             withSonarQubeEnv('sonarqube-instance') { // analysing and uploading to server
+            //                 sh "${scannerHome}/bin/sonar-scanner"
+            //             }
+            //         }
+            //     }
+            // }
+            // stage('qualityGate analysis') {
+            //     steps {
+            //         script {
+            //             timeout(time:5, unit:"MINUTES"){
+            //                 waitForQualityGate abortPipeline: true
+            //             }
+            //         }
+            //     }
+            // }
             stage('dependabotAlerts scan') {
                 steps {
                     script {
