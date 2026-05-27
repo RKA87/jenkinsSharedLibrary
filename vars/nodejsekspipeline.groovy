@@ -74,31 +74,74 @@ def call(Map configMap) {
             //         }
             //     }
             // }
+            // stage('dependabotAlerts scan') {
+            //     steps {
+            //         script {
+            //             echo "Fetching Dependabot Scan Alerts"
+
+            //             withCredentials([string(credentialsId: 'github-dependabot-scan-token', variable: 'GITHUB_TOKEN')]) {
+            //                 def repoUrl = sh(
+            //                     script: "git remote get-url origin",
+            //                     returnStdout: true
+            //                 ).trim()
+            //                 def repoPath = repoUrl.replaceAll(/.*github\.com[\/:]/, '').replaceAll(/\.git$/, '') 
+
+            //                 def response = sh (
+            //                     script: """
+            //                         curl -L \
+            //                             -H "Accept: application/vnd.github+json" \
+            //                             -H "Authorization: Bearer ${GITHUB_TOKEN}" \
+            //                             -H "X-GitHub-Api-Version: 2022-11-28" \
+            //                             "https://api.github.com/repos/${repoPath}/dependabot/alerts?state=open&per_page=100" \
+            //                             | jq '[.[] | select(.security_vulnerability.severity == "high" or .security_vulnerability.severity == "critical")] | length'
+            //                     """,
+            //                     returnStdout: true
+            //                 ).trim()
+            //                 def alerts = readJSON file: response
+            //                 echo "Found ${alerts.szie()} dependabot alerts"
+            //             }
+            //         }
+            //     }
+            // }
             stage('dependabotAlerts scan') {
                 steps {
                     script {
                         echo "Fetching Dependabot Scan Alerts"
 
                         withCredentials([string(credentialsId: 'github-dependabot-scan-token', variable: 'GITHUB_TOKEN')]) {
-                            def repoUrl = sh(
-                                script: "git remote get-url origin",
-                                returnStdout: true
-                            ).trim()
+                            // Get the repository path cleanly
+                            def repoUrl = sh(script: "git remote get-url origin", returnStdout: true).trim()
                             def repoPath = repoUrl.replaceAll(/.*github\.com[\/:]/, '').replaceAll(/\.git$/, '') 
 
-                            def response = sh (
-                                script: """
-                                    curl -L \
-                                        -H "Accept: application/vnd.github+json" \
-                                        -H "Authorization: Bearer ${GITHUB_TOKEN}" \
-                                        -H "X-GitHub-Api-Version: 2022-11-28" \
-                                        "https://api.github.com/repos/${repoPath}/dependabot/alerts?state=open&per_page=100" \
-                                        | jq '[.[] | select(.security_vulnerability.severity == "high" or .security_vulnerability.severity == "critical")] | length'
-                                """,
-                                returnStdout: true
-                            ).trim()
-                            def alerts = readJSON file: response
-                            echo "Found ${alerts.szie()} dependabot alerts"
+                            // 1. Fetch raw JSON and save it to file (Note the escaped \$GITHUB_TOKEN)
+                            sh """
+                                curl -s -L \
+                                    -H "Accept: application/vnd.github+json" \
+                                    -H "Authorization: Bearer \$GITHUB_TOKEN" \
+                                    -H "X-GitHub-Api-Version: 2022-11-28" \
+                                    "https://api.github.com/repos/${repoPath}/dependabot/alerts?state=open&per_page=100" > raw_alerts.json
+                            """
+
+                            // 2. Use Jenkins native readJSON to parse the array safely
+                            def alerts = readJSON file: 'raw_alerts.json'
+
+                            if (alerts instanceof List) {
+                                // 3. Filter for high and critical alerts using Groovy instead of fragile shell piping
+                                def highAndCriticalAlerts = alerts.findAll { 
+                                    it.security_vulnerability?.severity == 'high' || it.security_vulnerability?.severity == 'critical' 
+                                }
+                                
+                                int totalCount = highAndCriticalAlerts.size()
+                                echo "Found ${totalCount} HIGH or CRITICAL dependabot alerts"
+
+                                // Optional: Fail the build if vulnerabilities are found
+                                if (totalCount > 0) {
+                                    error "Pipeline stopped due to ${totalCount} critical/high security vulnerabilities found."
+                                }
+                            } else {
+                                echo "Unexpected response from GitHub API. Checking file content..."
+                                sh "cat raw_alerts.json"
+                            }
                         }
                     }
                 }
