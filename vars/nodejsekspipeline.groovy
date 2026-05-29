@@ -128,7 +128,7 @@ def call(Map configMap) {
                             if (alerts instanceof List) {
                                 // 3. Filter for high and critical alerts using Groovy instead of fragile shell piping
                                 def highAndCriticalAlerts = alerts.findAll { 
-                                    it.security_vulnerability?.severity == 'high' || it.security_vulnerability?.severity == 'critical' 
+                                    it.security_vulnerability?.severity == 'high' || it.security_vulnerability?.severity == 'critical' || it.security_vulnerability?.severity == 'medium'
                                 }
                                 
                                 int totalCount = highAndCriticalAlerts.size()
