@@ -132,7 +132,7 @@ def call(Map configMap) {
                                 }
                                 
                                 int totalCount = highAndCriticalAlerts.size()
-                                echo "Found ${totalCount} HIGH or CRITICAL dependabot alerts"
+                                echo "Found ${totalCount} HIGH or CRITICAL or MEDIUM dependabot alerts"
 
                                 // Optional: Fail the build if vulnerabilities are found
                                 if (totalCount > 0) {
